@@ -1,0 +1,120 @@
+#!/usr/bin/python
+import sys
+from math import sqrt
+
+import rospy
+import numpy as np
+
+from pyqtgraph import PlotWidget, mkPen
+
+from PyQt5.QtCore import QObject, QThread, pyqtSignal
+from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget
+from scipy.stats import chi2  # type: ignore
+
+from cyclops_ros.msg import IMUMatchAttempt as IMUMatchAttemptMessage
+
+
+class IMUMatchAttempt(object):
+    def __init__(self, degrees_of_freedom, cost_landscape, local_minima):
+        self.degrees_of_freedom = degrees_of_freedom
+        self.cost_landscape = cost_landscape
+        self.local_minima = local_minima
+
+    def copy(self):
+        return IMUMatchAttempt(
+            self.degrees_of_freedom,
+            self.cost_landscape.copy(),
+            self.local_minima.copy(),
+        )
+
+
+class IOContext(QObject):
+    init_attempt = pyqtSignal(IMUMatchAttempt)
+
+    def __init__(self):
+        super(IOContext, self).__init__()
+        self.subscribers = []
+
+        self.subscribeImuMatchAttempt()
+
+    def subscribe(self, msg, topic, callback):
+        self.subscribers.append(rospy.Subscriber(topic, msg, callback, queue_size=64))
+
+    def subscribeImuMatchAttempt(self):
+        def unflatten(data):
+            return [(data[i], data[i + 1]) for i in range(0, len(data), 2)]
+
+        def callback(msg):
+            n_dof = msg.degrees_of_freedom
+            cost_landscape = np.reshape(msg.cost_landscape.data, (-1, 2))
+            local_minima = np.reshape(msg.local_minima.data, (-1, 2))
+
+            attempt = IMUMatchAttempt(n_dof, cost_landscape, local_minima)
+            self.init_attempt.emit(attempt)
+
+        topic = "cyclops_backend/init/attempt"
+        self.subscribe(IMUMatchAttemptMessage, topic, callback)
+
+    def spin(self):
+        rospy.spin()
+
+
+class IMUMatchAttemptPlotWidget(QWidget):
+    def __init__(self, io_context):
+        super(IMUMatchAttemptPlotWidget, self).__init__()
+
+        self.widget = PlotWidget()
+        self.widget.setBackground("w")
+        self.widget.setTitle("VIO scale matching cost landscape")
+        self.widget.setLabel("left", "Significant probability [%]")
+        self.widget.setLabel("bottom", "Scale")
+        self.widget.setLogMode(True, False)
+        self.widget.setYRange(0, 100)
+        self.widget.showGrid(y=True)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.widget)
+
+        io_context.init_attempt.connect(self.onInitAttempt)
+
+    def plot(self, data, degrees_of_freedom, **kwargs):
+        s = [scale for scale, _ in data]
+        p = [
+            100 * min(1.0, max(0.0, 1.0 - chi2.cdf(cost, degrees_of_freedom)))  # type: ignore
+            for _, cost in data
+        ]
+        self.widget.plot(s, p, **kwargs)
+
+    def onInitAttempt(self, attempt):
+        self.widget.clear()
+        self.widget.setLogMode(True, False)
+        self.widget.setYRange(0, 100)
+
+        self.plot(attempt.cost_landscape, attempt.degrees_of_freedom, pen=mkPen("b"))
+        self.plot(
+            attempt.local_minima,
+            attempt.degrees_of_freedom,
+            symbol="x",
+            pen=mkPen("r"),
+            symbolPen=mkPen("r"),
+        )
+
+
+if __name__ == "__main__":
+    rospy.init_node("initializer_plot")
+    app = QApplication(sys.argv)
+
+    io_context = IOContext()
+    main = IMUMatchAttemptPlotWidget(io_context)
+
+    thread = QThread()
+    io_context.moveToThread(thread)
+    thread.started.connect(io_context.spin)
+    thread.start()
+    main.show()
+
+    result = app.exec_()
+    rospy.loginfo("Terminating")
+    rospy.signal_shutdown("QApplication terminated")
+
+    sys.exit(result)

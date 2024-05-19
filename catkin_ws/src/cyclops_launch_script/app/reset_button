@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+import sys
+
+import rospy
+from std_msgs.msg import Bool
+
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton
+from PyQt5.QtGui import QFont
+
+
+class ResetButton(QWidget):
+    def __init__(self):
+        super(ResetButton, self).__init__()
+        self.initUI()
+        self.publisher = rospy.Publisher("reset", Bool, queue_size=1)
+
+    def handle_clicked(self):
+        self.publisher.publish(Bool(True))
+
+    def initUI(self):
+        self.setWindowTitle("Reset")
+        self.setGeometry(400, 400, 480, 320)
+        self.resetButton = QPushButton(self)
+        self.resetButton.resize(400, 240)
+        self.resetButton.setStyleSheet(
+            """
+            QPushButton::pressed { background-color : red; }
+            """
+        )
+        self.resetButton.setText("Reset")
+        self.resetButton.setFont(QFont("Roboto", 40))
+        self.resetButton.clicked.connect(self.handle_clicked)
+        self.resetButton.setToolTip("Send /reset topic")
+        self.resetButton.move(40, 40)
+
+
+if __name__ == "__main__":
+    rospy.init_node("reset_button")
+    app = QApplication(sys.argv)
+    ex = ResetButton()
+    ex.show()
+    sys.exit(app.exec_())

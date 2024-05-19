@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="package_root" value="$(dirname)/../../"/>
+  <arg name="config_root" value="$(arg package_root)/config"/>
+  <arg name="auto_reset" default="true"/>
+
+  <node pkg="cyclops_ros" type="cyclops_ros_frontend"
+    name="cyclops_frontend" output="log">
+    <rosparam command="load" file="$(arg config_root)/cyclops.sensor.yaml"/>
+    <rosparam command="load" file="$(arg config_root)/cyclops.frontend.yaml"/>
+
+    <param name="log_level" type="int" value="0"/>
+    <param name="image_topic_name" type="string" value="camera"/>
+  </node>
+
+  <node pkg="cyclops_ros" type="cyclops_ros_frontend_visual"
+    name="cyclops_frontend_visualizer" output="log">
+    <param name="log_level" type="int" value="0"/>
+    <param name="image_topic_name" type="string" value="camera"/>
+  </node>
+
+  <node pkg="cyclops_ros" type="cyclops_ros_backend"
+    name="cyclops_backend" output="screen">
+    <rosparam command="load" file="$(arg config_root)/cyclops.sensor.yaml"/>
+    <rosparam command="load" file="$(arg config_root)/cyclops.backend.yaml"/>
+
+    <param name="log_level" type="int" value="1"/>
+    <param name="topic_io/map_frame_id" type="string" value="cyclops_map"/>
+    <param name="topic_io/imu_topic_name" type="string" value="imu"/>
+  </node>
+
+  <node if="$(eval auto_reset)" pkg="cyclops_launch_script"
+    name="reset_publisher" type="reset_publisher"/>
+  <node if="$(eval not auto_reset)" pkg="cyclops_launch_script"
+    name="reset_publisher" type="reset_button" output="log"/>
+
+  <node pkg="cyclops_launch_script"
+    name="initializer_plot" type="initializer_plot" output="log">
+  </node>
+</launch>

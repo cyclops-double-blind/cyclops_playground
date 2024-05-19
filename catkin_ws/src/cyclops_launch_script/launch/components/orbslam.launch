@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="package_root" value="$(dirname)/../../"/>
+  <arg name="auto_reset" default="true"/>
+
+  <!-- Specify container launcher parameters as the following. -->
+  <rosparam subst_value="true" ns="orbslam3_mono_imu__launcher">
+    mounts: >
+      $(arg package_root)/config:/config:ro,
+      $(arg package_root)/logs:/var/log:rw
+  </rosparam>
+
+  <node pkg="orbslam3_docker"
+      type="mono_imu" name="orbslam3_mono_imu" output="screen">
+    <rosparam>
+      clahe:
+        clip_limit: 3.0
+        tilesize:
+          width: 8
+          height: 8
+
+      vocabulary_path: /ORBvoc.txt
+      settings_path: /config/orbslam.config.yaml
+
+      imu_callback_queue_size: 2048
+      image_callback_queue_size: 256
+      image_data_buffer_maxsize: 128
+
+      data_consume_worker_loop_delay_ms: 1
+      imu_topic: imu
+      image_topic: camera
+
+      tracking_image_publish_topic: tracking_image
+      camera_pose_publish_topic: camera_pose
+      map_points_publish_topic: map_points
+    </rosparam>
+  </node>
+
+  <node if="$(eval auto_reset)" pkg="cyclops_launch_script"
+    name="reset_publisher" type="reset_publisher"/>
+  <node if="$(eval not auto_reset)" pkg="cyclops_launch_script"
+    name="reset_publisher" type="reset_button" output="log"/>
+</launch>

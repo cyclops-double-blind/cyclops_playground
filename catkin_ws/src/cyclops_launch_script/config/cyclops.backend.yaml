@@ -1,0 +1,39 @@
+---
+gravity: 9.81
+
+keyframe_window:
+  optimization_phase_max_keyframes: 10
+  initialization_phase_max_keyframes: 10
+
+update_throttling:
+  update_rate_target: 10.0
+  update_rate_smoothing_window_size: 1.0
+
+initialization:
+  vision:
+    feature_point_isotropic_noise: 0.0075
+    multiview:
+      bundle_adjustment_max_iterations: 20
+      bundle_adjustment_max_solver_time: 0.06
+
+  imu:
+    sampling:
+      sampling_domain_lowerbound: 0.001
+      sampling_domain_upperbound: 50.0
+      samples_count: 200
+
+    acceptance_test:
+      max_scale_log_deviation: 0.5
+      max_normalized_gravity_deviation: 0.05
+      max_normalized_velocity_deviation: 0.15
+      max_sfm_perturbation: 0.10
+      translation_match_min_p_value: 0.3
+
+estimation:
+  optimizer:
+    max_num_iterations: 1000
+    max_solver_time_in_seconds: 0.06
+  fault_detection:
+    min_landmark_accept_rate: 0.2
+    max_landmark_update_failures: 3
+...

@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="dataset"/>
+  <arg name="dataset_path" value="$(dirname)/../dataset/$(arg dataset).bag"/>
+  <arg name="mode" default="cyclops"/>
+
+  <arg if="$(eval dataset == 'MH_01')" name="start" default="45"/>
+  <arg if="$(eval dataset == 'MH_02')" name="start" default="38"/>
+  <arg if="$(eval dataset == 'MH_03')" name="start" default="20"/>
+  <arg if="$(eval dataset == 'MH_04')" name="start" default="21"/>
+  <arg if="$(eval dataset == 'MH_05')" name="start" default="20"/>
+
+  <arg name="play_rate" default="1.0"/>
+  <arg name="auto_reset" default="true"/>
+
+  <param name="use_sim_time" type="bool" value="true"/>
+
+  <include file="$(dirname)/components/dataset.launch">
+    <arg name="file" value="$(arg dataset_path)"/>
+    <arg name="start" value="$(arg start)"/>
+    <arg name="play_rate" value="$(arg play_rate)"/>
+  </include>
+
+  <include if="$(eval mode == 'cyclops')"
+    file="$(dirname)/components/cyclops.launch">
+    <arg name="auto_reset" value="$(arg auto_reset)"/>
+  </include>
+
+  <include if="$(eval mode == 'orbslam')"
+    file="$(dirname)/components/orbslam.launch">
+    <arg name="auto_reset" value="$(arg auto_reset)"/>
+  </include>
+
+  <node type="rviz" name="rviz" pkg="rviz"
+    args="-d $(dirname)/../config/$(arg mode).visual.rviz"/>
+</launch>

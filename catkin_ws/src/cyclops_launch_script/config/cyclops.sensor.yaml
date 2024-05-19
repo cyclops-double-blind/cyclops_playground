@@ -1,0 +1,41 @@
+---
+camera:
+  width: 752
+  height: 480
+
+  intrinsic:
+    fx: 458.654
+    fy: 457.296
+    cx: 367.215
+    cy: 248.375
+
+  distortion:
+    k1: -0.28340811
+    k2: 0.07395907
+    p1: 0.00019359
+    p2: 1.76187114e-5
+
+extrinsic:
+  imu_camera_time_delay: 0.0
+  imu_camera_transform:
+    translation:
+      x: -0.02164015
+      y: -0.06467699
+      z: +0.00981073
+    rotation:
+      w: +0.712301460668946
+      x: -0.00770717975553208
+      y: +0.0104993233705954
+      z: +0.701752800292141
+
+imu_noise:
+  acc_white_noise: 0.5
+  gyr_white_noise: 0.01
+  acc_random_walk: 0.00067
+  gyr_random_walk: 0.000019393
+  acc_bias_prior_stddev: 0.2
+  gyr_bias_prior_stddev: 0.1
+
+image_noise:
+  pixel_white_noise: 35.0
+...
