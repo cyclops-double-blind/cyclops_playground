@@ -1,0 +1,6 @@
+[submodule "catkin_ws/src/cyclops_ros"]
+	path = catkin_ws/src/cyclops_ros
+	url = https://github.com/cyclops-double-blind/cyclops_ros
+[submodule "catkin_ws/src/cyclops_orbslam3_reproduction"]
+	path = catkin_ws/src/cyclops_orbslam3_reproduction
+	url = https://github.com/cyclops-double-blind/cyclops_orbslam3_reproduction
