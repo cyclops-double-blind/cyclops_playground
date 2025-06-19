@@ -2,12 +2,32 @@
 base_directory=$(realpath $(dirname "$BASH_SOURCE")/..)
 dataset_directory="$base_directory/dataset"
 
-asl_dataset_base_url="\
-  http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall"
-sequences=(MH_01_easy MH_02_easy MH_03_medium MH_04_difficult MH_05_difficult)
+dataset_base_url="http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset"
+sequences=(
+  machine_hall,MH_01_easy
+  machine_hall,MH_02_easy
+  machine_hall,MH_03_medium
+  machine_hall,MH_04_difficult
+  machine_hall,MH_05_difficult
+)
+
+function sequence_url() {
+  local sequence=$(sequence_name $1)
+  local baseurl=${dataset_base_url}/$(sequence_type $1)
+  echo "${baseurl}/$sequence/$sequence.zip"
+}
+
+function sequence_type() {
+  echo "${1%%,*}"
+}
+
+function sequence_name() {
+  echo "${1#*,}"
+}
 
 function sequence_basename() {
-  echo "${1:0:5}"
+  local sequence=$(sequence_name $1)
+  echo "${sequence:0:5}"
 }
 
 function sequence_basepath() {
@@ -22,14 +42,52 @@ function path_exists() {
   fi
 }
 
+function sequence_download_size() {
+  local length_text=$(curl -sI "$(sequence_url $1)" | grep -i 'Content-Length:')
+  local filesize=$(echo $length_text | awk '{print $2}' | tr -d '\r')
+  echo "$filesize"
+}
+
+function sequence_needs_download() {
+  local bag_filename="$(sequence_basepath $1).bag"
+  local download_filename="$(sequence_basepath $1).zip"
+
+  if ! path_exists "$bag_filename" && ! path_exists "$download_filename"; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 function sequence_bag_all_exist() {
-  for sequence in ${sequences[@]}; do
-    if ! path_exists "$(sequence_basepath $sequence).bag"; then
+  for element in ${sequences[@]}; do
+    if ! path_exists "$(sequence_basepath $element).bag"; then
       return 1
     fi
   done
 
   return 0
+}
+
+function draw_progress_bar() {
+  local total=$1
+  local total_readable=$2
+
+  local current=$3
+  local current_readable=$4
+
+  local width=70
+
+  local percent=$((current * 100 / total))
+  local completed_width=$((width * percent / 100))
+
+  local bar=""
+  for ((i=0; i<completed_width; i++)); do bar+="#"; done
+  for ((i=0; i<width-completed_width; i++)); do bar+="-"; done
+
+  local display_text="[$bar] $percent% ($current_readable/$total_readable)"
+
+  echo -ne "\033[K$display_text\r"
 }
 
 function download_sequences() {
@@ -40,7 +98,7 @@ function download_sequences() {
   download_pid=()
 
   trap download_sequences__cleanup SIGINT SIGTERM
-  download_sequences__download_and_wait
+  download_sequences__start
 
   eval "$original_sigint"
   eval "$original_sigterm"
@@ -54,42 +112,96 @@ function download_sequences__cleanup() {
     fi
   done
 
-  for sequence in "${download_sequences[@]}"; do
-    rm $(sequence_basepath $sequence).zip
-    rm $(sequence_basepath $sequence).zip.log
+  for element in "${download_sequences[@]}"; do
+    rm $(sequence_basepath $element).zip
+    rm $(sequence_basepath $element).zip.log
   done
 
   exit 1
 }
 
-function download_sequences__download_and_wait() {
-  for sequence in ${sequences[@]}; do
-    local sequence_url=$asl_dataset_base_url/$sequence/$sequence.zip
-    local basepath="$(sequence_basepath $sequence)"
+function download_sequences__start() {
+  local totalsize=0
 
-    if ! path_exists "$basepath.bag" && ! path_exists "$basepath.zip"; then
-      wget -O "$basepath.zip" -o "$basepath.zip.log" $sequence_url &
-      download_pid+=($!)
-      download_sequences+=("$sequence")
+  echo "Querying for remote file existence and download size..."
+  for index in "${!sequences[@]}"; do
+    if ! sequence_needs_download ${sequences[$index]}; then
+      continue
+    fi
+
+    local filesize=$(sequence_download_size ${sequences[$index]})
+    if [[ ! -n "$filesize" ]]; then
+      local sequence=$(sequence_name ${sequences[$index]})
+      echo "Warning: Could not determine filesize for $sequence. Skipping."
+      continue
+    fi
+
+    download_sequences+=("${sequences[$index]}")
+    totalsize=$((totalsize + filesize))
+
+    draw_progress_bar ${#sequences[@]} ${#sequences[@]} $index $index
+  done
+
+  draw_progress_bar \
+    ${#sequences[@]} ${#sequences[@]} ${#sequences[@]} ${#sequences[@]}
+  echo ""
+
+  if [ ${#download_sequences[@]} -ne 0 ]; then
+    echo "Total size: $(numfmt --to=iec --suffix=B <<< "$totalsize")"
+  else
+    echo "No dataset sequences need to be newly downloaded."
+    return
+  fi
+
+  download_sequences__download
+  download_sequences__display_progress $totalsize
+}
+
+function download_sequences__download() {
+  for element in ${download_sequences[@]}; do
+    local filename="$(sequence_basepath $element).zip"
+
+    mkdir -p $(dirname ${filename})
+    wget -O "${filename}" -o "${filename}.log" $(sequence_url $element) &
+
+    download_pid+=($!)
+  done
+}
+
+function download_sequences__downloaded_size() {
+  local size=0
+
+  for element in "${download_sequences[@]}"; do
+    local basepath="$(sequence_basepath $element)"
+    if [ -f "$basepath.zip" ]; then
+      size=$((size + $(stat -c %s "$basepath.zip")))
     fi
   done
 
-  if [ ${#download_sequences[@]} -ne 0 ]; then
-    echo "Downloading EuroC-MAV dataset sequences: ${download_sequences[@]}."
-    echo "Monitor $dataset_directory/MH_*.zip.log to watch the progress"
-  else
-    echo "No dataset sequences need to be newly downloaded."
+  echo $size
+}
+
+function download_sequences__display_progress() {
+  local total=$1
+  local total_readable=$(numfmt --to=iec --suffix=B <<< "$total")
+
+  if [ ${#download_pid[@]} -eq 0 ]; then
+    return
   fi
 
-  for pid in ${download_pid[@]}; do
-    wait $pid
+  while ps -p ${download_pid[@]} > /dev/null; do
+    local current=$(download_sequences__downloaded_size)
+    local current_readable=$(numfmt --to=iec --suffix=B <<< "$current")
+
+    draw_progress_bar $total $total_readable $current $current_readable
+
+    sleep 1
   done
 }
 
 function compile_sequences() {
-  for sequence in ${sequences[@]}; do
-    basepath=$(sequence_basepath $sequence)
-
+  for element in ${sequences[@]}; do
+    local basepath=$(sequence_basepath $element)
     if path_exists $basepath.bag; then
       continue
     fi
@@ -105,8 +217,8 @@ function compile_sequences() {
 function cleanup() {
   cleanup_files=()
 
-  for sequence in ${sequences[@]}; do
-    basepath="$(sequence_basepath $sequence)"
+  for element in ${sequences[@]}; do
+    local basepath="$(sequence_basepath $element)"
 
     if path_exists "$basepath"; then
       cleanup_files+=("$basepath")
@@ -124,6 +236,8 @@ function cleanup() {
   fi
 
   echo "Cleanup temporary files? (Y/N)"
+
+  local response
   read -r response
 
   response=$(echo "$response" | tr '[:upper:]' '[:lower:]')
