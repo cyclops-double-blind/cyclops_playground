@@ -9,6 +9,12 @@ sequences=(
   machine_hall,MH_03_medium
   machine_hall,MH_04_difficult
   machine_hall,MH_05_difficult
+  vicon_room1,V1_01_easy
+  vicon_room1,V1_02_medium
+  vicon_room1,V1_03_difficult
+  vicon_room2,V2_01_easy
+  vicon_room2,V2_02_medium
+  vicon_room2,V2_03_difficult
 )
 
 function sequence_url() {
