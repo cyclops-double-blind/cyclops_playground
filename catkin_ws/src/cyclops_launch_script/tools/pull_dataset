@@ -1,28 +1,24 @@
 #!/bin/bash
 base_directory=$(realpath $(dirname "$BASH_SOURCE")/..)
-dataset_directory="$base_directory/dataset"
+sequences=()
 
-dataset_base_url="http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset"
-sequences=(
-  machine_hall,MH_01_easy
-  machine_hall,MH_02_easy
-  machine_hall,MH_03_medium
-  machine_hall,MH_04_difficult
-  machine_hall,MH_05_difficult
-  vicon_room1,V1_01_easy
-  vicon_room1,V1_02_medium
-  vicon_room1,V1_03_difficult
-  vicon_room2,V2_01_easy
-  vicon_room2,V2_02_medium
-  vicon_room2,V2_03_difficult
-)
-
+## Dataset-specific functions that needs to be injected later.
 function sequence_url() {
-  local sequence=$(sequence_name $1)
-  local baseurl=${dataset_base_url}/$(sequence_type $1)
-  echo "${baseurl}/$sequence/$sequence.zip"
+  echo "Unresolved implementation: $FUNCNAME" >&2
+  exit 1
 }
 
+function sequence_unzip() {
+  echo "Unresolved implementation: $FUNCNAME" >&2
+  exit 1
+}
+
+function sequence_compile() {
+  echo "Unresolved implementation: $FUNCNAME" >&2
+  exit 1
+}
+
+## Common functions
 function sequence_type() {
   echo "${1%%,*}"
 }
@@ -40,14 +36,6 @@ function sequence_basepath() {
   echo "$dataset_directory/$(sequence_basename $1)"
 }
 
-function path_exists() {
-  if [ -d "$1" ] || [ -f "$1" ]; then
-    return 0
-  else
-    return 1
-  fi
-}
-
 function sequence_download_size() {
   local length_text=$(curl -sI "$(sequence_url $1)" | grep -i 'Content-Length:')
   local filesize=$(echo $length_text | awk '{print $2}' | tr -d '\r')
@@ -56,7 +44,7 @@ function sequence_download_size() {
 
 function sequence_needs_download() {
   local bag_filename="$(sequence_basepath $1).bag"
-  local download_filename="$(sequence_basepath $1).zip"
+  local download_filename="$(sequence_basepath $1).$download_filetype"
 
   if ! path_exists "$bag_filename" && ! path_exists "$download_filename"; then
     return 0
@@ -73,6 +61,14 @@ function sequence_bag_all_exist() {
   done
 
   return 0
+}
+
+function path_exists() {
+  if [ -d "$1" ] || [ -f "$1" ]; then
+    return 0
+  else
+    return 1
+  fi
 }
 
 function draw_progress_bar() {
@@ -119,11 +115,22 @@ function download_sequences__cleanup() {
   done
 
   for element in "${download_sequences[@]}"; do
-    rm $(sequence_basepath $element).zip
-    rm $(sequence_basepath $element).zip.log
+    rm $(sequence_basepath $element).$download_filetype
+    rm $(sequence_basepath $element).$download_filetype.log
   done
 
   exit 1
+}
+
+function download_sequences__download() {
+  for element in ${download_sequences[@]}; do
+    local filename="$(sequence_basepath $element).$download_filetype"
+
+    mkdir -p $(dirname ${filename})
+    wget -O "${filename}" -o "${filename}.log" $(sequence_url $element) &
+
+    download_pid+=($!)
+  done
 }
 
 function download_sequences__start() {
@@ -163,24 +170,13 @@ function download_sequences__start() {
   download_sequences__display_progress $totalsize
 }
 
-function download_sequences__download() {
-  for element in ${download_sequences[@]}; do
-    local filename="$(sequence_basepath $element).zip"
-
-    mkdir -p $(dirname ${filename})
-    wget -O "${filename}" -o "${filename}.log" $(sequence_url $element) &
-
-    download_pid+=($!)
-  done
-}
-
 function download_sequences__downloaded_size() {
   local size=0
 
   for element in "${download_sequences[@]}"; do
     local basepath="$(sequence_basepath $element)"
-    if [ -f "$basepath.zip" ]; then
-      size=$((size + $(stat -c %s "$basepath.zip")))
+    if [ -f "$basepath.$download_filetype" ]; then
+      size=$((size + $(stat -c %s "$basepath.$download_filetype")))
     fi
   done
 
@@ -213,10 +209,9 @@ function compile_sequences() {
     fi
 
     if ! path_exists $basepath; then
-      unzip -d $basepath $basepath.zip || exit 1
+      sequence_unzip $basepath.$download_filetype $basepath || exit 1
     fi
-    python $base_directory/tools/compile_dataset.py \
-      -o $basepath.bag -d $basepath/mav0 || exit 1
+    sequence_compile $element
   done
 }
 
@@ -229,11 +224,11 @@ function cleanup() {
     if path_exists "$basepath"; then
       cleanup_files+=("$basepath")
     fi
-    if path_exists "$basepath.zip"; then
-      cleanup_files+=("$basepath.zip")
+    if path_exists "$basepath.$download_filetype"; then
+      cleanup_files+=("$basepath.$download_filetype")
     fi
-    if path_exists "$basepath.zip.log"; then
-      cleanup_files+=("$basepath.zip.log")
+    if path_exists "$basepath.$download_filetype.log"; then
+      cleanup_files+=("$basepath.$download_filetype.log")
     fi
   done
 
@@ -263,6 +258,39 @@ function cleanup() {
       ;;
   esac
 }
+
+show_help() {
+  echo "Usage: $0 <dataset_type>"
+  echo ""
+  echo "Available dataset types (case insensitive):"
+  for key in "${!allowed_datasets[@]}"; do
+    echo "  - ${allowed_datasets[$key]}"
+  done
+}
+
+declare -A allowed_datasets
+allowed_datasets["euroc"]="EuroC"
+allowed_datasets["tum"]="TUM"
+
+if [ $# -eq 0 ]; then
+  dataset_type="euroc"
+elif [ "$#" -gt 1 ]; then
+  show_help
+  exit 1
+else
+  dataset_type="${1,,}"
+fi
+
+dataset_name=${allowed_datasets[$dataset_type]}
+if [ -z "$dataset_name" ]; then
+  show_help
+  echo ""
+  echo "Unknown dataset type: '$dataset_type'" >&2
+  exit 1
+fi
+
+source $base_directory/tools/allowed_datasets/${dataset_name}.sh
+echo "Downloading ${dataset_name} dataset."
 
 if sequence_bag_all_exist; then
   echo "Sequence bags already exist. Nothing needs to be done."

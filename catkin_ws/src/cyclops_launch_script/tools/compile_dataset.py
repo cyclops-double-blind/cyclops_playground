@@ -33,7 +33,7 @@ def parse_timestamp(timestamp):
 
 def parse_image(timestamp, filepath):
     image = cv_bridge.cv2_to_imgmsg(
-        cv2.imread(filepath, cv2.IMREAD_UNCHANGED), encoding="mono8"
+        cv2.imread(filepath, cv2.IMREAD_UNCHANGED), encoding="passthrough"
     )
     image.header.stamp = parse_timestamp(timestamp)
     return image
@@ -117,13 +117,13 @@ def read_groundtruth(root, time_offset, frame):
     ]
 
 
-def process_dataset(data_root, timestamp_base):
+def process_dataset(data_root, timestamp_base, groundtruth_stream):
     start_time = read_start_time(join(data_root, "imu0"))
     time_offset = start_time - timestamp_base
 
     imu_data = read_imu(join(data_root, "imu0"), time_offset)
     truth_estim_data = read_groundtruth(
-        join(data_root, "state_groundtruth_estimate0"), time_offset, "map"
+        join(data_root, groundtruth_stream), time_offset, "map"
     )
     camera_data = read_camera(join(data_root, "cam0"), time_offset)
 
@@ -165,6 +165,12 @@ def parse_args():
         type=int,
         default=1403636579763555584,
     )
+    parser.add_argument(
+        "--groundtruth-stream-name",
+        "-g",
+        type=str,
+        default="state_groundtruth_estimate0",
+    )
 
     args = parser.parse_args()
     return args
@@ -172,7 +178,9 @@ def parse_args():
 
 def main():
     args = parse_args()
-    data = process_dataset(args.data_dir, args.timestamp_base)
+    data = process_dataset(
+        args.data_dir, args.timestamp_base, args.groundtruth_stream_name
+    )
 
     print("writing output")
     with Bag(args.output_bag, "w") as output:
