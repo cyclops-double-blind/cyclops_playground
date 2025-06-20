@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<launch>
+  <group if="$(eval dataset not in ('EuroC', 'TUM'))">
+    <!-- Include absent launch file to raise an error with message -->
+    <include file="invalid dataset $(arg dataset): allowed are (EuroC, TUM)"/>
+  </group>
+
+  <group if="$(eval dataset=='EuroC')">
+    <arg name="allowed_sequences"
+      value="(
+        'MH_01', 'MH_02', 'MH_03', 'MH_04', 'MH_05',
+        'V1_01', 'V1_02', 'V1_03',
+        'V2_01', 'V2_02', 'V2_03')"/>
+    <include if="$(eval sequence not in eval(allowed_sequences))"
+      file="invalid sequence $(arg sequence) for EuroC dataset"/>
+  </group>
+
+  <group if="$(eval dataset=='TUM')">
+    <arg name="allowed_sequences"
+      value="('CR_01', 'CR_02', 'CR_03', 'CR_04', 'CR_05')"/>
+    <include if="$(eval sequence not in eval(allowed_sequences))"
+      file="invalid sequence $(arg sequence) for TUM dataset"/>
+  </group>
+
+  <include if="$(eval mode not in ('cyclops', 'orbslam'))"
+    file="invalid argument mode:=$(arg mode): allowed are (cyclops, orbslam)"/>
+</launch>

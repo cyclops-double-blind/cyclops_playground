@@ -7,6 +7,8 @@
 
   <arg name="mode" default="cyclops"/>
 
+  <include file="$(dirname)/arguments.launch" pass_all_args="true"/>
+
   <arg name="play_rate" default="1.0"/>
   <arg name="auto_reset" default="true"/>
 
