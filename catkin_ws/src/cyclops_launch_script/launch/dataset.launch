@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="dataset_dir" value="$(dirname)/../dataset/$(arg dataset)"/>
+  <arg name="dataset_path" value="$(arg dataset_dir)/$(arg sequence).bag"/>
+
+  <group if="$(eval dataset == 'EuroC')">
+    <arg if="$(eval sequence == 'MH_01')" name="start" value="45"/>
+    <arg if="$(eval sequence == 'MH_02')" name="start" value="38"/>
+    <arg if="$(eval sequence == 'MH_03')" name="start" value="20"/>
+    <arg if="$(eval sequence == 'MH_04')" name="start" value="21"/>
+    <arg if="$(eval sequence == 'MH_05')" name="start" value="20"/>
+
+    <arg if="$(eval sequence == 'V1_01')" name="start" value="4.5"/>
+    <arg if="$(eval sequence == 'V1_02')" name="start" value="4.5"/>
+    <arg if="$(eval sequence == 'V1_03')" name="start" value="4.5"/>
+
+    <arg if="$(eval sequence == 'V2_01')" name="start" value="4.5"/>
+    <arg if="$(eval sequence == 'V2_02')" name="start" value="4.5"/>
+    <arg if="$(eval sequence == 'V2_03')" name="start" value="4.5"/>
+
+    <arg name="arguments"
+      value="--clock -r $(arg play_rate) --start $(arg start) --pause"/>
+    <node pkg="rosbag" type="play" name="player" output="screen"
+      args="$(arg arguments) $(arg dataset_path)"/>
+  </group>
+
+  <group if="$(eval dataset == 'TUM')">
+    <arg if="$(eval sequence == 'CR_01')" name="start" value="0"/>
+    <arg if="$(eval sequence == 'CR_02')" name="start" value="0"/>
+    <arg if="$(eval sequence == 'CR_03')" name="start" value="0"/>
+    <arg if="$(eval sequence == 'CR_04')" name="start" value="0"/>
+    <arg if="$(eval sequence == 'CR_05')" name="start" value="0"/>
+
+    <arg name="arguments"
+      value="--clock -r $(arg play_rate) --start $(arg start) --pause"/>
+    <node pkg="rosbag" type="play" name="player" output="screen"
+      args="$(arg arguments) $(arg dataset_path)"/>
+  </group>
+</launch>
