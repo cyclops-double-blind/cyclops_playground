@@ -1,7 +1,10 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="dataset"/>
-  <arg name="dataset_path" value="$(dirname)/../dataset/$(arg dataset).bag"/>
+  <arg name="sequence"/>
+  <arg name="dataset" default="EuroC"/>
+  <arg name="dataset_dir" value="$(dirname)/../dataset/$(arg dataset)"/>
+  <arg name="dataset_path" value="$(arg dataset_dir)/$(arg sequence).bag"/>
+
   <arg name="mode" default="cyclops"/>
 
   <arg if="$(eval dataset == 'MH_01')" name="start" default="45"/>
