@@ -37,9 +37,12 @@
       args="$(arg arguments) $(arg dataset_path)"/>
   </group>
 
+  <arg name="sequence_fullname" value="$(arg dataset)_$(arg sequence)"/>
+  <arg name="record_basename" value="cyclops_$(arg sequence_fullname)"/>
+
   <node if="$(eval mode == 'cyclops')"
     pkg="rosbag" type="record" name="recorder" output="log"
-    args="-o $(dirname)/../logs/cyclops/cyclops_$(arg dataset)_$(arg sequence)
+    args="-o $(dirname)/../logs/$(arg record_basename)
       /cyclops_backend/init/accept
       /cyclops_backend/init/ambiguity
       /cyclops_backend/init/attempt
@@ -55,7 +58,6 @@
       /cyclops_backend/sanity/badness
       /cyclops_backend/sanity/failure
       /cyclops_backend/sanity/statistics
-      /cyclops_backend/start
-      /truth_estim">
+      /cyclops_backend/start">
   </node>
 </launch>

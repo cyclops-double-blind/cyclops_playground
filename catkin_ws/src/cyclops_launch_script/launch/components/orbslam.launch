@@ -3,9 +3,9 @@
   <arg name="package_root" value="$(dirname)/../../"/>
   <arg name="auto_reset" default="true"/>
 
-  <arg name="dump_root" value="$(arg package_root)/logs/orbslam3"/>
+  <arg name="dump_root" value="$(arg package_root)/logs"/>
   <arg name="dump_prefix"
-    value="$(arg dump_root)/$(arg dataset).$(arg sequence)"/>
+    value="$(arg dump_root)/orbslam3_$(arg dataset)_$(arg sequence)"/>
 
   <arg name="lost_dumpfile_name" value="$(arg dump_prefix).lost"/>
   <arg name="init_dumpfile_name" value="$(arg dump_prefix).init"/>
