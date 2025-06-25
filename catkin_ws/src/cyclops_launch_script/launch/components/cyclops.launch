@@ -32,11 +32,6 @@
     <param name="topic_io/imu_topic_name" type="string" value="imu"/>
   </node>
 
-  <node if="$(eval auto_reset)" pkg="cyclops_launch_script"
-    name="reset_publisher" type="reset_publisher"/>
-  <node if="$(eval not auto_reset)" pkg="cyclops_launch_script"
-    name="reset_publisher" type="reset_button" output="log"/>
-
   <node pkg="cyclops_launch_script"
     name="initializer_plot" type="initializer_plot" output="log">
   </node>

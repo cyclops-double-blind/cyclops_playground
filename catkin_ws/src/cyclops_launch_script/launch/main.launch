@@ -26,4 +26,9 @@
 
   <node type="rviz" name="rviz" pkg="rviz"
     args="-d $(dirname)/../config/$(arg mode).visual.rviz"/>
+
+  <node if="$(eval not auto_reset)" pkg="cyclops_launch_script"
+    name="reset_publisher" type="reset_button" output="log"/>
+  <node if="$(eval auto_reset)" pkg="cyclops_launch_script"
+    name="reset_publisher" type="reset_publisher"/>
 </launch>

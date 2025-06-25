@@ -35,9 +35,4 @@
       map_points_publish_topic: map_points
     </rosparam>
   </node>
-
-  <node if="$(eval auto_reset)" pkg="cyclops_launch_script"
-    name="reset_publisher" type="reset_publisher"/>
-  <node if="$(eval not auto_reset)" pkg="cyclops_launch_script"
-    name="reset_publisher" type="reset_button" output="log"/>
 </launch>
