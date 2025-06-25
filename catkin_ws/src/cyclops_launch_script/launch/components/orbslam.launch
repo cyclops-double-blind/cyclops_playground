@@ -3,11 +3,22 @@
   <arg name="package_root" value="$(dirname)/../../"/>
   <arg name="auto_reset" default="true"/>
 
+  <arg name="dump_root" value="$(arg package_root)/logs/orbslam3"/>
+  <arg name="dump_prefix"
+    value="$(arg dump_root)/$(arg dataset).$(arg sequence)"/>
+
+  <arg name="lost_dumpfile_name" value="$(arg dump_prefix).lost"/>
+  <arg name="init_dumpfile_name" value="$(arg dump_prefix).init"/>
+
   <!-- Specify container launcher parameters as the following. -->
   <rosparam subst_value="true" ns="orbslam3_mono_imu__launcher">
-    mounts: >
-      $(arg package_root)/config:/config:ro,
-      $(arg package_root)/logs:/var/log:rw
+    touchs:
+      - $(arg dump_prefix).lost
+      - $(arg dump_prefix).init
+    mounts:
+      - $(arg package_root)/config:/config:ro
+      - $(arg dump_prefix).lost:/var/log/orbslam3.dump.lost
+      - $(arg dump_prefix).init:/var/log/orbslam3.dump.initialization
   </rosparam>
 
   <node pkg="orbslam3_docker"
