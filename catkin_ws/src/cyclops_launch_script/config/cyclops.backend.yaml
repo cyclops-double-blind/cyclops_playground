@@ -17,6 +17,8 @@ initialization:
       bundle_adjustment_max_solver_time: 0.06
 
   imu:
+    imu_only: $(arg imu_only)
+
     sampling:
       sampling_domain_lowerbound: 0.001
       sampling_domain_upperbound: 50.0

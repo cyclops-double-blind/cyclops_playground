@@ -25,7 +25,8 @@
   <node pkg="cyclops_ros" type="cyclops_ros_backend"
     name="cyclops_backend" output="screen">
     <rosparam command="load" file="$(arg sensor_config)"/>
-    <rosparam command="load" file="$(arg config_root)/cyclops.backend.yaml"/>
+    <rosparam command="load" subst_value="true"
+      file="$(arg config_root)/cyclops.backend.yaml"/>
 
     <param name="log_level" type="int" value="1"/>
     <param name="topic_io/map_frame_id" type="string" value="cyclops_map"/>

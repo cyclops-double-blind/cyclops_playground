@@ -36,4 +36,26 @@
     <node pkg="rosbag" type="play" name="player" output="screen"
       args="$(arg arguments) $(arg dataset_path)"/>
   </group>
+
+  <node if="$(eval mode == 'cyclops')"
+    pkg="rosbag" type="record" name="recorder" output="log"
+    args="-o $(dirname)/../logs/cyclops/cyclops_$(arg dataset)_$(arg sequence)
+      /cyclops_backend/init/accept
+      /cyclops_backend/init/ambiguity
+      /cyclops_backend/init/attempt
+      /cyclops_backend/init/candidate_reject
+      /cyclops_backend/init/failure
+      /cyclops_backend/init/solution_reject
+      /cyclops_backend/init/success
+      /cyclops_backend/init/success/detail
+      /cyclops_backend/init/vision/failure
+      /cyclops_backend/init/vision/sanity
+      /cyclops_backend/init/vision/success
+      /cyclops_backend/keyframe
+      /cyclops_backend/sanity/badness
+      /cyclops_backend/sanity/failure
+      /cyclops_backend/sanity/statistics
+      /cyclops_backend/start
+      /truth_estim">
+  </node>
 </launch>

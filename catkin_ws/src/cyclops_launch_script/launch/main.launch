@@ -6,6 +6,7 @@
   <arg name="dataset_path" value="$(arg dataset_dir)/$(arg sequence).bag"/>
 
   <arg name="mode" default="cyclops"/>
+  <arg name="imu_only" default="false"/>
 
   <include file="$(dirname)/arguments.launch" pass_all_args="true"/>
 
@@ -16,15 +17,10 @@
 
   <include pass_all_args="true" file="$(dirname)/dataset.launch"/>
 
-  <include if="$(eval mode == 'cyclops')"
-    file="$(dirname)/components/cyclops.launch">
-    <arg name="auto_reset" value="$(arg auto_reset)"/>
-  </include>
-
-  <include if="$(eval mode == 'orbslam')"
-    file="$(dirname)/components/orbslam.launch">
-    <arg name="auto_reset" value="$(arg auto_reset)"/>
-  </include>
+  <include if="$(eval mode == 'cyclops')" pass_all_args="true"
+    file="$(dirname)/components/cyclops.launch"/>
+  <include if="$(eval mode == 'orbslam')" pass_all_args="true"
+    file="$(dirname)/components/orbslam.launch"/>
 
   <node type="rviz" name="rviz" pkg="rviz"
     args="-d $(dirname)/../config/$(arg mode).visual.rviz"/>
