@@ -38,7 +38,11 @@
   </group>
 
   <arg name="sequence_fullname" value="$(arg dataset)_$(arg sequence)"/>
-  <arg name="record_basename" value="cyclops_$(arg sequence_fullname)"/>
+
+  <arg if="$(eval not imu_only)"
+    name="record_basename" value="cyclops_$(arg sequence_fullname)"/>
+  <arg if="$(eval imu_only)"
+    name="record_basename" value="cyclops_imu_only_$(arg sequence_fullname)"/>
 
   <node if="$(eval mode == 'cyclops')"
     pkg="rosbag" type="record" name="recorder" output="log"
