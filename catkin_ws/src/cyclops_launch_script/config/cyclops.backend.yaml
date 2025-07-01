@@ -26,7 +26,7 @@ initialization:
 
     acceptance_test:
       max_scale_log_deviation: 0.8
-      max_normalized_gravity_deviation: 0.05
+      max_normalized_gravity_deviation: 0.08
       max_normalized_velocity_deviation: 0.15
       max_sfm_perturbation: 0.10
       rotation_match_min_p_value: 0.3
@@ -37,6 +37,6 @@ estimation:
     max_num_iterations: 1000
     max_solver_time_in_seconds: 0.06
   fault_detection:
-    min_landmark_accept_rate: 0.2
+    min_landmark_accept_rate: 0.1
     max_landmark_update_failures: 3
 ...

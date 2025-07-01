@@ -31,12 +31,12 @@ extrinsic:
 
 imu_noise:
   acc_white_noise: 0.04
-  gyr_white_noise: 0.002262
+  gyr_white_noise: 0.0045
   acc_random_walk: 0.00086
   gyr_random_walk: 0.000022
   acc_bias_prior_stddev: 0.2
   gyr_bias_prior_stddev: 0.1
 
 image_noise:
-  pixel_white_noise: 35.0
+  pixel_white_noise: 120.0
 ...
