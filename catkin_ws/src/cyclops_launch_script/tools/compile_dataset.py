@@ -1,9 +1,9 @@
 import argparse
-import os
 from os.path import join
 
 import cv2
 import rospy
+import numpy as np
 from cv_bridge import CvBridge
 from rosbag import Bag
 
@@ -31,11 +31,34 @@ def parse_timestamp(timestamp):
     return rospy.Time(sec, nsec)
 
 
+def parse_image_target_encoding(cv_image):
+    def handle_mono_image():
+        if cv_image.dtype in (np.int8, np.uint8):
+            return "mono8"
+        if cv_image.dtype in (np.int16, np.uint16):
+            return "mono16"
+        raise ValueError("Unknown CV dtype {}".format(cv_image.dtype))
+
+    if len(cv_image.shape) < 3:
+        return handle_mono_image()
+
+    _, _, channel = cv_image.shape
+    if channel == 1:
+        return handle_mono_image()
+
+    if channel == 3:
+        return "rgb8"
+
+    raise ValueError("Intractable image channel width: {}".format(channel))
+
+
 def parse_image(timestamp, filepath):
-    image = cv_bridge.cv2_to_imgmsg(
-        cv2.imread(filepath, cv2.IMREAD_UNCHANGED), encoding="passthrough"
-    )
+    cv_image = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
+    encoding = parse_image_target_encoding(cv_image)
+
+    image = cv_bridge.cv2_to_imgmsg(cv_image, encoding=encoding)
     image.header.stamp = parse_timestamp(timestamp)
+
     return image
 
 
