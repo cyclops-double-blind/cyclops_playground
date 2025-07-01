@@ -3,6 +3,7 @@ track_update_fps_target: 10.0
 track_update_fps_filter_window_size: 3.0
 
 max_features: 400
+tracking_patch_size: 21
 feature_min_distance: 25
 epipolar_ransac_pixel_noise: 1.0
 epipolar_ransac_confidence_threshold: 0.99
