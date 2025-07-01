@@ -14,7 +14,7 @@ class ResetButton(QWidget):
         self.initUI()
         self.publisher = rospy.Publisher("reset", Bool, queue_size=1)
 
-    def handle_clicked(self):
+    def handleClicked(self):
         self.publisher.publish(Bool(True))
 
     def initUI(self):
@@ -29,7 +29,7 @@ class ResetButton(QWidget):
         )
         self.resetButton.setText("Reset")
         self.resetButton.setFont(QFont("Roboto", 40))
-        self.resetButton.clicked.connect(self.handle_clicked)
+        self.resetButton.clicked.connect(self.handleClicked)
         self.resetButton.setToolTip("Send /reset topic")
         self.resetButton.move(40, 40)
 
