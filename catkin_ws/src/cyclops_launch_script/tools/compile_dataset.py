@@ -8,12 +8,12 @@ from cv_bridge import CvBridge
 from rosbag import Bag
 
 try:
-    from tqdm import tqdm
+    from tqdm import tqdm  # type: ignore
 except ImportError:
     tqdm = None
 
 from sensor_msgs.msg import Imu
-from geometry_msgs.msg import Vector3, Quaternion, PoseStamped
+from geometry_msgs.msg import Vector3, Point, Quaternion, PoseStamped
 
 cv_bridge = CvBridge()
 
@@ -74,7 +74,7 @@ def parse_posestamped(frame, timestamp, position, orientation):
     msg = PoseStamped()
     msg.header.stamp = parse_timestamp(timestamp)
     msg.header.frame_id = frame
-    msg.pose.position = Vector3(*position)
+    msg.pose.position = Point(*position)
 
     w, x, y, z = orientation
     msg.pose.orientation = Quaternion(x, y, z, w)
@@ -96,7 +96,7 @@ def read_camera(root, time_offset):
     data = parse_data_csv(root)
 
     def make_result(progress=None):
-        result = [None] * len(data)
+        result = [None] * len(data)  # type: list
         for (i, (timestamp, filename)) in enumerate(data):
             result[i] = parse_image(
                 int(timestamp) - time_offset, join(root, "data", filename)
