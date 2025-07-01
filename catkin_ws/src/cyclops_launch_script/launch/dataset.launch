@@ -25,11 +25,11 @@
   </group>
 
   <group if="$(eval dataset == 'TUM')">
-    <arg if="$(eval sequence == 'CR_01')" name="start" value="0"/>
-    <arg if="$(eval sequence == 'CR_02')" name="start" value="0"/>
-    <arg if="$(eval sequence == 'CR_03')" name="start" value="0"/>
-    <arg if="$(eval sequence == 'CR_04')" name="start" value="0"/>
-    <arg if="$(eval sequence == 'CR_05')" name="start" value="0"/>
+    <arg if="$(eval sequence == 'CR_01')" name="start" value="4.5"/>
+    <arg if="$(eval sequence == 'CR_02')" name="start" value="4.5"/>
+    <arg if="$(eval sequence == 'CR_03')" name="start" value="4.5"/>
+    <arg if="$(eval sequence == 'CR_04')" name="start" value="4.5"/>
+    <arg if="$(eval sequence == 'CR_05')" name="start" value="4.5"/>
 
     <arg name="arguments"
       value="--clock -r $(arg play_rate) --start $(arg start) --pause"/>
