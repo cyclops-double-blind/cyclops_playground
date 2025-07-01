@@ -10,6 +10,7 @@ camera:
     cy: 248.375
 
   distortion:
+    model: "pinhole"
     k1: -0.28340811
     k2: 0.07395907
     p1: 0.00019359
