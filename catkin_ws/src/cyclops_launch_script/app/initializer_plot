@@ -52,7 +52,7 @@ class IOContext(QObject):
             attempt = IMUMatchAttempt(n_dof, cost_landscape, local_minima)
             self.init_attempt.emit(attempt)
 
-        topic = "cyclops_backend/init/attempt"
+        topic = "cyclops_backend/init/imu/attempt"
         self.subscribe(IMUMatchAttemptMessage, topic, callback)
 
     def spin(self):

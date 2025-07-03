@@ -47,17 +47,20 @@
   <node if="$(eval mode == 'cyclops')"
     pkg="rosbag" type="record" name="recorder" output="log"
     args="-o $(dirname)/../logs/$(arg record_basename)
-      /cyclops_backend/init/accept
-      /cyclops_backend/init/ambiguity
-      /cyclops_backend/init/attempt
-      /cyclops_backend/init/candidate_reject
-      /cyclops_backend/init/failure
-      /cyclops_backend/init/solution_reject
-      /cyclops_backend/init/success
-      /cyclops_backend/init/success/detail
       /cyclops_backend/init/vision/failure
       /cyclops_backend/init/vision/sanity
       /cyclops_backend/init/vision/success
+      /cyclops_backend/init/twoview/selection
+      /cyclops_backend/init/twoview/hypothesis
+      /cyclops_backend/init/twoview/success
+      /cyclops_backend/init/imu/attempt
+      /cyclops_backend/init/imu/ambiguity
+      /cyclops_backend/init/imu/accept
+      /cyclops_backend/init/imu/solution_reject
+      /cyclops_backend/init/imu/candidate_reject
+      /cyclops_backend/init/failure
+      /cyclops_backend/init/success
+      /cyclops_backend/init/success/detail
       /cyclops_backend/keyframe
       /cyclops_backend/sanity/badness
       /cyclops_backend/sanity/failure
