@@ -38,5 +38,5 @@ imu_noise:
   gyr_bias_prior_stddev: 0.1
 
 image_noise:
-  pixel_white_noise: 80.0
+  pixel_white_noise: 120.0
 ...
