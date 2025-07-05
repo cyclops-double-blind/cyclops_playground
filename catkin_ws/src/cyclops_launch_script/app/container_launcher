@@ -147,7 +147,6 @@ def main():
 
     touchFiles()
     mounts = getMounts()
-    rospy.loginfo("mounts: {}".format(mounts))
 
     client = docker.from_env()
     container = runContainer(client, namespace, image, binary, argv, mounts)
