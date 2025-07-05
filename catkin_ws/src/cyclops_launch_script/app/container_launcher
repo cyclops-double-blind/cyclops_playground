@@ -1,0 +1,162 @@
+#!/usr/bin/python
+import os
+import sys
+import re
+
+from pathlib import Path
+from functools import reduce
+
+
+def yieldSuccess(matches):
+    matches = [match for match in matches if match is not None]
+    return matches[0] if len(matches) > 0 else None
+
+
+def separateMatch(texts, pattern):
+    matches = [re.match(pattern, text) for text in texts]
+    match = yieldSuccess(matches)
+    return (
+        match.group("value") if match is not None else None,
+        [text for (text, match) in zip(texts, matches) if match is None],
+    )
+
+
+def makeKeyValueArgvPattern(key):
+    return key + r"\s*:=\s*(?P<value>.+)"
+
+
+def hijackArgv(argv):
+    argv_original = [arg for arg in argv]
+    nodename, argv_else = separateMatch(
+        argv_original[1:], makeKeyValueArgvPattern("__name")
+    )
+    argv_new_nodename = (
+        [] if nodename is None else ["__name:={}".format(nodename + "__launcher")]
+    )
+
+    argv_nodename_hijacked = argv_original[0:1] + argv_new_nodename + argv_else
+    return argv_original, argv_nodename_hijacked
+
+
+argv_original, argv_hijacked = hijackArgv(sys.argv)
+sys.argv = argv_hijacked
+
+import rospy
+import docker
+
+
+def maybeGetNamespace():
+    if "ROS_NAMESPACE" in os.environ:
+        return os.environ["ROS_NAMESPACE"]
+    return None
+
+
+def getRosparamOfStringList(name, pattern=None):
+    def log_failure(reason):
+        rospy.logerr("Parameter {} should be provided {}".format(name, reason))
+
+    if not rospy.has_param(name):
+        return None
+
+    value = rospy.get_param(name)
+    if not isinstance(value, list):
+        log_failure("as a list of string")
+        rospy.logerr("Instead got: {}".format(type(value)))
+        return None
+
+    elements_type = reduce(lambda x, y: x | {y}, map(type, value), set())
+
+    if elements_type != {str}:
+        log_failure("as a list of string")
+        rospy.logerr("Instead got: {}".format(elements_type))
+        return None
+
+    if pattern is None:
+        return value
+
+    for element in value:
+        if not re.match(pattern, element):
+            log_failure("following a regular expression {}".format(pattern))
+            rospy.logerr("Instead got an element: {}".format(element))
+            return None
+
+    return value
+
+
+def touchFiles():
+    touchs = getRosparamOfStringList("~touchs")
+    if touchs is None:
+        return
+
+    for touch in touchs:
+        file = Path(touch)
+        file.touch(exist_ok=True)
+
+
+def getMounts():
+    mounts = getRosparamOfStringList(
+        "~mounts", r"\s*[^(\0|:)]+\s*:\s*[^(\0|:)]+(\s*:\s*(rw|ro)\s*)?"
+    )
+    if mounts is None:
+        return None
+
+    def make_mount_volume(mount_repr):
+        splits = [split.strip() for split in mount_repr.split(":")]
+        host_path = splits[0]
+        container_path = splits[1]
+
+        if len(splits) == 2:
+            mount_mode = "rw"
+        else:
+            mount_mode = splits[2]
+
+        return host_path, {"bind": container_path, "mode": mount_mode}
+
+    return dict([make_mount_volume(mount) for mount in mounts])
+
+
+def parseContainerArgv(argv):
+    _, argv = separateMatch(argv[1:], makeKeyValueArgvPattern("__log"))
+    image, argv = separateMatch(argv, makeKeyValueArgvPattern("__image"))
+    binary, argv = separateMatch(argv, makeKeyValueArgvPattern("__binary"))
+    return image, binary, argv
+
+
+def runContainer(client, namespace, image, binary, argv, mounts):
+    return client.containers.run(
+        image,
+        command=[binary] + argv,
+        auto_remove=True,
+        network="host",
+        volumes=mounts,
+        environment={} if namespace is None else {"ROS_NAMESPACE": namespace},
+        detach=True,
+        init=True,
+    )
+
+
+def shutdown(container):
+    container.stop(timeout=5)
+
+
+def main():
+    rospy.init_node("container_launcher")
+
+    namespace = maybeGetNamespace()
+    image, binary, argv = parseContainerArgv(argv_original)
+
+    touchFiles()
+    mounts = getMounts()
+    rospy.loginfo("mounts: {}".format(mounts))
+
+    client = docker.from_env()
+    container = runContainer(client, namespace, image, binary, argv, mounts)
+    logs = container.logs(stream=True, follow=True)
+
+    rospy.on_shutdown(lambda: shutdown(container))
+    for log in logs:
+        rospy.loginfo(log.strip())
+
+
+if __name__ == "__main__":
+    main()

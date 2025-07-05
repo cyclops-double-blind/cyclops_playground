@@ -10,8 +10,12 @@
   <arg name="lost_dumpfile_name" value="$(arg dump_prefix).lost"/>
   <arg name="init_dumpfile_name" value="$(arg dump_prefix).init"/>
 
+  <arg name="nodename" value="orbslam3_mono_imu"/>
+  <arg name="bindir" value="/catkin_ws/orbslam3_docker_ros"/>
+  <arg name="binary" value="$(arg bindir)/mono_imu__containerized"/>
+
   <!-- Specify container launcher parameters as the following. -->
-  <rosparam subst_value="true" ns="orbslam3_mono_imu__launcher">
+  <rosparam subst_value="true" ns="$(arg nodename)__launcher">
     touchs:
       - $(arg dump_prefix).lost
       - $(arg dump_prefix).init
@@ -21,8 +25,9 @@
       - $(arg dump_prefix).init:/var/log/orbslam3.dump.initialization
   </rosparam>
 
-  <node pkg="orbslam3_docker"
-      type="mono_imu" name="orbslam3_mono_imu" output="screen">
+  <node pkg="cyclops_launch_script" type="container_launcher"
+      args="__image:=orbslam3-docker-app __binary:=$(arg binary)"
+      name="$(arg nodename)" output="screen">
     <rosparam subst_value="true">
       clahe:
         clip_limit: 3.0
