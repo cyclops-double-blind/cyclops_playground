@@ -22,6 +22,6 @@
       file="invalid sequence $(arg sequence) for TUM dataset"/>
   </group>
 
-  <include if="$(eval mode not in ('cyclops', 'orbslam'))"
-    file="invalid argument mode:=$(arg mode): allowed are (cyclops, orbslam)"/>
+  <include if="$(eval mode not in ('cyclops', 'orbslam', 'vinsmono'))"
+    file="invalid argument mode:=$(arg mode): allowed are (cyclops, orbslam, vinsmono)"/>
 </launch>

@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="package_root" value="$(dirname)/../../"/>
+  <arg name="auto_reset" default="true"/>
+
+  <arg name="dump_root" value="$(arg package_root)/logs"/>
+  <arg name="dump_prefix"
+    value="$(arg dump_root)/vinsmono_$(arg dataset)_$(arg sequence)"/>
+
+  <arg name="lost_dumpfile_name" value="$(arg dump_prefix).lost"/>
+  <arg name="init_dumpfile_name" value="$(arg dump_prefix).init"/>
+
+  <arg name="vins_root" value="$(find vinsmono_docker)/catkin/src/VINS-Mono"/>
+
+  <rosparam subst_value="true" ns="feature_tracker__launcher">
+    mounts:
+      - $(arg package_root)/config:/config:ro
+  </rosparam>
+  <node pkg="cyclops_launch_script" type="container_launcher"
+      args="__image:=vinsmono-docker __binary:=/catkin/lib/feature_tracker/feature_tracker"
+      name="feature_tracker" output="log">
+    <param name="config_file" type="string" value="/config/vinsmono.$(arg dataset).yaml"/>
+    <param name="vins_folder" type="string" value="/"/>
+  </node>
+
+  <rosparam subst_value="true" ns="vins_estimator__launcher">
+    touchs:
+      - $(arg dump_prefix).lost
+      - $(arg dump_prefix).init
+    mounts:
+      - $(arg package_root)/config:/config:ro
+      - $(arg dump_prefix).lost:/var/log/vinsmono.dump.lost
+      - $(arg dump_prefix).init:/var/log/vinsmono.dump.initialization
+  </rosparam>
+  <node pkg="cyclops_launch_script" type="container_launcher"
+      args="__image:=vinsmono-docker __binary:=/catkin/lib/vins_estimator/vins_estimator"
+      name="vins_estimator" output="screen">
+    <param name="config_file" type="string" value="/config/vinsmono.$(arg dataset).yaml"/>
+    <remap from="/feature_tracker/restart" to="/reset"/>
+  </node>
+</launch>

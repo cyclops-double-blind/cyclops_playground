@@ -21,6 +21,8 @@
     file="$(dirname)/components/cyclops.launch"/>
   <include if="$(eval mode == 'orbslam')" pass_all_args="true"
     file="$(dirname)/components/orbslam.launch"/>
+  <include if="$(eval mode == 'vinsmono')" pass_all_args="true"
+    file="$(dirname)/components/vinsmono.launch"/>
 
   <node type="rviz" name="rviz" pkg="rviz"
     args="-d $(dirname)/../config/$(arg mode).visual.rviz"/>
