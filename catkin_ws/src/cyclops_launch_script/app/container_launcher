@@ -154,7 +154,7 @@ def main():
 
     rospy.on_shutdown(lambda: shutdown(container))
     for log in logs:
-        rospy.loginfo(log.strip())
+        rospy.loginfo(log.strip().decode("utf-8"))
 
 
 if __name__ == "__main__":
