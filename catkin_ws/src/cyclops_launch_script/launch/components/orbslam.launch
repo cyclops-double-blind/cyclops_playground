@@ -11,7 +11,7 @@
   <arg name="init_dumpfile_name" value="$(arg dump_prefix).init"/>
 
   <arg name="nodename" value="orbslam3_mono_imu"/>
-  <arg name="bindir" value="/catkin_ws/orbslam3_docker_ros"/>
+  <arg name="bindir" value="/catkin/lib/orbslam3_docker_ros"/>
   <arg name="binary" value="$(arg bindir)/mono_imu__containerized"/>
 
   <!-- Specify container launcher parameters as the following. -->
