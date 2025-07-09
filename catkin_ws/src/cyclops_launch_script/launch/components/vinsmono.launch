@@ -30,7 +30,7 @@
     mounts:
       - $(arg package_root)/config:/config:ro
       - $(arg dump_prefix).lost:/var/log/vinsmono.dump.lost
-      - $(arg dump_prefix).init:/var/log/vinsmono.dump.initialization
+      - $(arg dump_prefix).init:/var/log/vinsmono.dump.init
   </rosparam>
   <node pkg="cyclops_launch_script" type="container_launcher"
       args="__image:=vinsmono-docker __binary:=/catkin/lib/vins_estimator/vins_estimator"
